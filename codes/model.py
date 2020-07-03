@@ -72,7 +72,7 @@ class KGEModel(nn.Module,ABC):
         
         model.train()
         optimizer.zero_grad()
-        pos_triple, neg_triple, subsampling_weight，type = next(train_iterator)
+        pos_triple, neg_triple, subsampling_weight, type = next(train_iterator)
 
         # CUDA is used by default.
         pos_triple = pos_triple.cuda()
