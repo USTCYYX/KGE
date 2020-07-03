@@ -72,11 +72,12 @@ class KGEModel(nn.Module,ABC):
         
         model.train()
         optimizer.zero_grad()
-        pos_triple, neg_triple, type = next(train_iterator)
+        pos_triple, neg_triple, subsampling_weight，type = next(train_iterator)
 
         # CUDA is used by default.
         pos_triple = pos_triple.cuda()
         neg_triple = neg_triple.cuda()
+        subsampling_weight = subsampling_weight.cuda()
 
         # score
         if(args.model=='DistMult'):
