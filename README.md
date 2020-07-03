@@ -5,7 +5,7 @@ I refer the hyperparameters from [OLD DOG](https://openreview.net/forum?id=BkxSm
 For each model, we have hyperparameters which include batch_size, negative_sample_size(usually have the same size as batch_size), embedding_size, gamma, 
 learning_rate and optimizers. The optimizers incluede Adam and Adagrad, which have been integrated into the code. 
 Some hyperparameters that aren't mentioned in [OLD DOG](https://openreview.net/forum?id=BkxSmlBFvr), I refer them from [RotatE](https://github.com/DeepGraphLearning/KnowledgeGraphEmbedding).  
-Thank them for their contribution.
+Thank them for their contributions.
   
 WN18RR  
 bash run.sh train DistMult wn18rr 0 0 1024 1024 512 6.0 0.0004 80000 8
