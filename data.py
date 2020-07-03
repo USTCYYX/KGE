@@ -45,6 +45,21 @@ def true_dict(triple):
             true_head[(relation, tail)].append(head)
     return true_head,true_tail
 
+def frequency(triple):
+    fre_hr={}
+    fre_rt={}
+    initial=3
+    for head,relation,tail in triple:
+        if (head,relation) not in fre_hr:
+            fre_hr[(head,relation)]=initial
+        else fre_hr[(head,relation)]=fre_hr[(head,relation)]+1
+        
+        if (relation,tail) not in fre_rt:
+            fre_rt[(relation,tail)]=initial
+        else fre_rt[(relation,tail)]=fre_rt[(relation,tail)]+1
+        
+     return fre_hr,fre_rt
+
 class train_data(Dataset):
     def __init__(self,triple,entity2id,relation2id,n_size,type):
         self.triple=triple
@@ -54,6 +69,7 @@ class train_data(Dataset):
         self.type=type
         self.n_size=n_size
         self.true_head,self.true_tail=true_dict(triple)
+        self.fre_hr,self.fre_rt=frequency(triple)
 
     def __len__(self):
         return self.len
@@ -61,8 +77,13 @@ class train_data(Dataset):
     def __getitem__(self,idx):
         pos_triple=self.triple[idx]
         head, relation, tail = pos_triple
+        
         neg_triple=[]
         neg_size=0
+        
+        subsampling_weight = self.fre_hr[(head, relation)] + self.fre_rt[(relation,tail)]
+        subsampling_weight = torch.sqrt(1 / torch.Tensor([subsampling_weight]))
+        
         while neg_size<self.n_size:
             neg_sample= np.random.randint(self.nen, size=self.n_size*2)
             if(self.type=='head_batch'):
@@ -86,14 +107,15 @@ class train_data(Dataset):
         neg_triple = np.concatenate(neg_triple)[:self.n_size]
         neg_triple = torch.from_numpy(neg_triple)
         pos_triple = torch.LongTensor(pos_triple)
-        return pos_triple,neg_triple
+        return pos_triple,neg_triple,subsampling_weight,self.type
 
     @staticmethod
     def collate_fn(data):
         pos_triple = torch.stack([_[0] for _ in data], dim=0)
         neg_triple = torch.stack([_[1] for _ in data], dim=0)
-        type = data[0][2]
-        return pos_triple, neg_triple, type
+        subsample_weight = torch.cat([_[2] for _ in data], dim=0)
+        type = data[0][3]
+        return pos_triple, neg_triple,subsampling_weight,type
 
 class test_data(Dataset):
     def __init__(self, triple, all_triple, entity2id, relation2id, type):
