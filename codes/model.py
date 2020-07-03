@@ -17,7 +17,8 @@ class KGEModel(nn.Module,ABC):
         """
         Defined in a specific model
         """
-
+    ...
+    
     def foward(self,sample,type):
         if(type == 'head_batch'):
             tail_part, head_part = sample
