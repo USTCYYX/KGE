@@ -83,10 +83,8 @@ class KGEModel(nn.Module,ABC):
         if(args.model=='DistMult'):
             neg_score = model((pos_triple, neg_triple), type=type)
             pos_score = model(pos_triple)
-            
-        # subsampling
-        neg_score=subsampling_weight * neg_score
-        pos_score=subsampling_weight * pos_score
+            neg_score=subsampling_weight * neg_score
+            pos_score=subsampling_weight * pos_score
         
         # loss
         if (args.model == 'DistMult'):
