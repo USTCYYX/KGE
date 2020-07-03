@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import os
-from enum import Enum
 from typing import Tuple, List, Dict
 
 from torch.utils.data import Dataset
