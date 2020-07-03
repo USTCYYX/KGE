@@ -27,7 +27,6 @@ def parse_args(args=None):
     parser.add_argument('-n', '--negative_sample_size', default=128, type=int)
     parser.add_argument('-d', '--hidden_dim', default=500, type=int)
     parser.add_argument('-g', '--gamma', default=12.0, type=float)
-    parser.add_argument('-a', '--adversarial_temperature', default=1.0, type=float)
     parser.add_argument('-b', '--batch_size', default=1024, type=int)
     parser.add_argument('--test_batch_size', default=4, type=int, help='valid/test batch size')
 
