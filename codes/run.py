@@ -260,7 +260,6 @@ def main(args):
     logging.info('batch_size = %d' % args.batch_size)
     logging.info('hidden_dim = %d' % args.hidden_dim)
     logging.info('gamma = %f' % args.gamma)
-    logging.info('optimizer:%s'%k)
     
     # Set valid dataloader as it would be evaluated during training
     
@@ -282,7 +281,7 @@ def main(args):
                 if args.data_path == 'data/wn18rr':
                     if args.model == 'RESCAL':
                         current_learning_rate = current_learning_rate * 0.1
-                    else
+                    else:
                         current_learning_rate = current_learning_rate * 0.04
                 else:
                     current_learning_rate = current_learning_rate * 0.1
