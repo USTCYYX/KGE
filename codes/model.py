@@ -186,13 +186,13 @@ class KGEModel(nn.Module):
         return score
 
     def RESCAL(self,head, relation, tail, mode):
-        tail = tail.permute(0, 1, 3, 2)
+        tail1 = tail.permute(0, 1, 3, 2)
         if mode == 'head-batch':
-            k = torch.matmul(relation, tail)
+            k = torch.matmul(relation, tail1)
             score = torch.matmul(head, k)
         else:
             k = torch.matmul(head, relation)
-            score = torch.matmul(k, tail)
+            score = torch.matmul(k, tail1)
         score = score.squeeze(dim=2)
         score = score.squeeze(dim=2)
         return score
