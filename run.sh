@@ -24,7 +24,6 @@ GAMMA=$9
 LEARNING_RATE=${10}
 MAX_STEPS=${11}
 TEST_BATCH_SIZE=${12}
-UNCERTAINTY=${13}
 
 if [ $MODE == "train" ]
 then
@@ -39,7 +38,6 @@ CUDA_VISIBLE_DEVICES=$GPU_DEVICE python -u $CODE_PATH/run.py --do_train \
     --model $MODEL \
     -n $NEGATIVE_SAMPLE_SIZE -b $BATCH_SIZE -d $HIDDEN_DIM \
     -g $GAMMA \
-    -u $UNCERTAINTY \
     -lr $LEARNING_RATE --max_steps $MAX_STEPS \
     -save $SAVE --test_batch_size $TEST_BATCH_SIZE \
 
