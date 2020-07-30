@@ -53,6 +53,18 @@ class KGEModel(nn.Module):
         elif(self.model_name=='ComplEx'):
             self.relation_embedding = nn.Parameter(torch.zeros(nrelation, 2*self.relation_dim))
             self.entity_embedding = nn.Parameter(torch.zeros(nentity, 2*self.entity_dim))
+        elif(self.model_name=='RESCALR'):
+            self.relation_embedding = nn.Parameter(torch.zeros(nrelation, self.relation_dim,self.relation_dim*2))
+            self.entity_embedding = nn.Parameter(torch.zeros(nentity,1,self.entity_dim))
+        elif(self.model_name=='RESCALD'):
+            self.relation_embedding = nn.Parameter(torch.zeros(nrelation, self.relation_dim+1,self.relation_dim))
+            self.entity_embedding = nn.Parameter(torch.zeros(nentity,1,self.entity_dim*2))
+        elif(self.model_name=='DistMultR'):
+            self.relation_embedding = nn.Parameter(torch.zeros(nrelation, self.relation_dim,self.relation_dim*2+1))
+            self.entity_embedding = nn.Parameter(torch.zeros(nentity,1,self.entity_dim))
+        elif(self.model_name=='DistMultD'):
+            self.relation_embedding = nn.Parameter(torch.zeros(nrelation, 1,self.relation_dim*2))
+            self.entity_embedding = nn.Parameter(torch.zeros(nentity,1,self.entity_dim*2))
         else:
             self.relation_embedding = nn.Parameter(torch.zeros(nrelation, self.relation_dim))
             self.entity_embedding = nn.Parameter(torch.zeros(nentity, self.entity_dim))
@@ -106,7 +118,7 @@ class KGEModel(nn.Module):
         elif mode == 'head-batch':
             tail_part, head_part = sample
             batch_size, negative_sample_size = head_part.size(0), head_part.size(1)
-            if(self.model_name=='RESCAL'):
+            if(self.model_name=='RESCAL' or self.model_name=='RESCALR' or self.model_name=='RESCALD' or self.model_name=='DistMultR' or self.model_name=='DistMultD'):
                 head = torch.index_select(
                     self.entity_embedding,
                     dim=0,
@@ -147,7 +159,7 @@ class KGEModel(nn.Module):
                 index=head_part[:, 1]
             ).unsqueeze(1)
 
-            if(self.model_name=='RESCAL'):
+            if(self.model_name=='RESCAL' or self.model_name=='RESCALR' or self.model_name=='RESCALD' or self.model_name=='DistMultR' or self.model_name=='DistMultD'):
                 tail = torch.index_select(
                     self.entity_embedding,
                     dim=0,
@@ -166,7 +178,11 @@ class KGEModel(nn.Module):
         model_func = {
             'DistMult': self.DistMult,
             'RESCAL':self.RESCAL,
-            'ComplEx':self.ComplEx
+            'ComplEx':self.ComplEx,
+            'RESCALR':self.RESCALR,
+            'RESCALD':self.RESCALD,
+            'DistMultR':self.DistMultR,
+            'DistMultD':self.DistMultD
         }
         
         if self.model_name in model_func:
@@ -196,6 +212,74 @@ class KGEModel(nn.Module):
         score = score.squeeze(dim=2)
         score = score.squeeze(dim=2)
         return score
+    
+    def DistMultR(self, head, relation, tail, mode):
+        tail1 = tail.permute(0, 1, 3, 2)
+        o=head.size()
+        d=o[3]
+        listre=relation.split(2*d,dim=3)
+        re=listre[1]
+        reh,ret=torch.chunk(listre[0],2,dim=3)
+        res=torch.matmul(reh*re.permute(0,1,3,2),ret.permute(0,1,3,2))
+        if mode == 'head-batch':
+            k = torch.matmul(res, tail1)
+            score = torch.matmul(head, k)
+        else:
+            k = torch.matmul(head, res)
+            score = torch.matmul(k, tail1)
+        score = score.squeeze(dim=2)
+        score = score.squeeze(dim=2)
+        return score
+    
+    def DistMultD(self, head, relation, tail, mode):
+        head1,headp=torch.chunk(head, 2, dim=3)
+        tail1,tailp=torch.chunk(tail, 2, dim=3)
+        relation1,relationp=torch.chunk(relation, 2, dim=3)
+        heads=torch.matmul(torch.matmul(head1,relationp.permute(0, 1, 3, 2)),headp)
+        tails=torch.matmul(tailp.permute(0, 1, 3, 2),torch.matmul(relationp,tail1.permute(0, 1, 3, 2)))
+        if mode == 'head-batch':
+            score = heads * (relation1 * tails.permute(0, 1, 3, 2))
+        else:
+            score = (heads * relation1) * tails.permute(0, 1, 3, 2)
+        score = score.sum(dim = 3)
+        score = score.squeeze(dim=2)
+        return score
+    
+    def RESCALR(self,head,relation,tail,mode):
+        relation1,relation2=torch.chunk(relation, 2, dim=3)
+        relation3=torch.matmul(torch.matmul(relation2,relation1),relation2.permute(0, 1, 3, 2))
+        tail1 = tail.permute(0, 1, 3, 2)
+        if mode == 'head-batch':
+            k = torch.matmul(relation3, tail1)
+            score = torch.matmul(head, k)
+        else:
+            k = torch.matmul(head, relation3)
+            score = torch.matmul(k, tail1)
+        score = score.squeeze(dim=2)
+        score = score.squeeze(dim=2)
+        return score 
+    
+    def RESCALD(self,head,relation,tail,mode):
+        o=head.size()
+        d=int(o[3]/2)
+        head1,headp=torch.chunk(head, 2, dim=3)
+        tail1,tailp=torch.chunk(tail, 2, dim=3)
+        listre=relation.split(d, dim=2)
+        relation1=listre[0]
+        relationp=listre[1]
+        if mode == 'head-batch':
+            q = torch.matmul(head1, relationp.permute(0, 1, 3, 2))
+            z = torch.matmul(headp, torch.matmul(relation1, tailp.permute(0, 1, 3, 2)))
+            h = torch.matmul(relationp, tail1.permute(0, 1, 3, 2))
+            score = torch.matmul(torch.matmul(q, z), h)
+        else:
+            q = torch.matmul(head1, relationp.permute(0, 1, 3, 2))
+            z = torch.matmul(torch.matmul(headp, relation1), tailp.permute(0, 1, 3, 2))
+            h = torch.matmul(relationp, tail1.permute(0, 1, 3, 2))
+            score = torch.matmul(torch.matmul(q, z), h)
+        score = score.squeeze(dim=2)
+        score = score.squeeze(dim=2)
+        return score    
     
     def ComplEx(self, head, relation, tail, mode):
         re_head, im_head = torch.chunk(head, 2, dim=2)
