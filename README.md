@@ -11,9 +11,9 @@ Thank them for their contributions.
 WN18RR  
 bash run.sh train DistMult wn18rr 0 0 512 1024 512 200.0 0.0005 30000 8  
 bash run.sh train ComplEx wn18rr 0 0 512 1024 512 200.0 0.0005 30000 8  
-bash run.sh train RESCAL wn18rr 0 0 512 1024 512 200.0 0.0005 60000 16
+bash run.sh train RESCAL wn18rr 0 0 512 1024 1024 200.0 0.0005 60000 16  
 
 FB15K-237  
 bash run.sh train DistMult FB15K237 0 0 1024 256 512 200.0 0.001 60000 16  
 bash run.sh train ComplEx FB15K237 0 0 1024 256 512 200.0 0.001 40000 16  
-bash run.sh train RESCAL FB15K237 0 0 1024 256 512 200.0 0.0005 60000 16
+bash run.sh train RESCAL FB15K237 0 0 512 256 1024 200.0 0.0005 60000 16
