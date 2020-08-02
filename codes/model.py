@@ -414,7 +414,7 @@ class KGEModel(nn.Module):
         pos_loss = (subsampling_weight * pos_loss).sum() / subsampling_weight.sum()
 
         neg_loss = torch.sigmoid(negative_score)
-        neg_loss = -torch.log(1-neg_loss+0.000000001).mean(dim = 1)
+        neg_loss = -(args.uncertainty*torch.log(neg_loss+0.000000001)+(1-args.uncertainty)*torch.log(1-neg_loss+0.000000001)).mean(dim = 1)
         neg_loss = (subsampling_weight * neg_loss).sum() / subsampling_weight.sum()
 
         loss = (pos_loss + neg_loss) / 2
