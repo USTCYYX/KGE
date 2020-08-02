@@ -63,7 +63,7 @@ class KGEModel(nn.Module):
             self.relation_embedding = nn.Parameter(torch.zeros(nrelation, self.relation_dim,self.relation_dim*2+1))
             self.entity_embedding = nn.Parameter(torch.zeros(nentity,1,self.entity_dim))
         elif(self.model_name=='DistMultD'):
-            self.relation_embedding = nn.Parameter(torch.zeros(nrelation, 1,self.relation_dim*2))
+            self.relation_embedding = nn.Parameter(torch.zeros(nrelation, 1,self.relation_dim*3))
             self.entity_embedding = nn.Parameter(torch.zeros(nentity,1,self.entity_dim*2))
         else:
             self.relation_embedding = nn.Parameter(torch.zeros(nrelation, self.relation_dim))
@@ -234,9 +234,9 @@ class KGEModel(nn.Module):
     def DistMultD(self, head, relation, tail, mode):
         head1,headp=torch.chunk(head, 2, dim=3)
         tail1,tailp=torch.chunk(tail, 2, dim=3)
-        relation1,relationp=torch.chunk(relation, 2, dim=3)
-        heads=torch.matmul(torch.matmul(head1,relationp.permute(0, 1, 3, 2)),headp)
-        tails=torch.matmul(tailp.permute(0, 1, 3, 2),torch.matmul(relationp,tail1.permute(0, 1, 3, 2)))
+        relation1,relationph,relationpt=torch.chunk(relation, 3, dim=3)
+        heads=torch.matmul(torch.matmul(head1,relationph.permute(0, 1, 3, 2)),headp)
+        tails=torch.matmul(tailp.permute(0, 1, 3, 2),torch.matmul(relationpt,tail1.permute(0, 1, 3, 2)))
         if mode == 'head-batch':
             score = heads * (relation1 * tails.permute(0, 1, 3, 2))
         else:
