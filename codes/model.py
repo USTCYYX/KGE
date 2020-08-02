@@ -65,6 +65,10 @@ class KGEModel(nn.Module):
         elif(self.model_name=='DistMultD'):
             self.relation_embedding = nn.Parameter(torch.zeros(nrelation, 1,self.relation_dim*3))
             self.entity_embedding = nn.Parameter(torch.zeros(nentity,1,self.entity_dim*2))
+        elif(self.model_name=='sce'):
+            size=int((1+self.relation_dim)*self.relation_dim/2)
+            self.relation_embedding = nn.Parameter(torch.zeros(nrelation, size))
+            self.entity_embedding = nn.Parameter(torch.zeros(nentity, self.entity_dim)) 
         else:
             self.relation_embedding = nn.Parameter(torch.zeros(nrelation, self.relation_dim))
             self.entity_embedding = nn.Parameter(torch.zeros(nentity, self.entity_dim))
@@ -182,7 +186,8 @@ class KGEModel(nn.Module):
             'RESCALR':self.RESCALR,
             'RESCALD':self.RESCALD,
             'DistMultR':self.DistMultR,
-            'DistMultD':self.DistMultD
+            'DistMultD':self.DistMultD,
+            'sce':self.sce
         }
         
         if self.model_name in model_func:
@@ -230,6 +235,52 @@ class KGEModel(nn.Module):
         score = score.squeeze(dim=2)
         score = score.squeeze(dim=2)
         return score
+
+    def sce(self, head, relation, tail, mode):
+        o=head.size()
+        d=o[2]
+        size=int((1+d)*d/2)
+        if mode == 'head-batch':
+          for a in range(1,d):
+            j=int((1+a)*a/2)
+            if(a==1):
+                listre=relation.split(size-j,dim=2)
+                re=listre[0]
+            else:
+                listre=re.split(size-j,dim=2)
+                re = listre[0]
+            listen=tail.split(a,dim=2)
+            if(a==1):
+              score=listre[1]*listen[0]
+            else:
+              k=(listre[1]*listen[0]).sum(dim=2)
+              k=k.unsqueeze(dim=2)
+              score=torch.cat([score,k],dim=2)
+          k=(listre[0]*tail).sum(dim=2)
+          k=k.unsqueeze(dim=2)
+          score=torch.cat([score,k],dim=2)
+          score=(head*score).sum(dim=2)
+        else:
+          for a in range(1,d):
+            j=int((1+a)*a/2)
+            if(a==1):
+                listre=relation.split(size-j,dim=2)
+                re=listre[0]
+            else:
+                listre = re.split(size - j, dim=2)
+                re = listre[0]
+            listen=head.split(a,dim=2)
+            if(a==1):
+                score=listre[1]*listen[0]
+            else:
+                k=(listre[1]*listen[0]).sum(dim=2)
+                k=k.unsqueeze(dim=2)
+                score=torch.cat([score,k],dim=2)
+          k=(listre[0]*head).sum(dim=2)
+          k=k.unsqueeze(dim=2)
+          score=torch.cat([score,k],dim=2)
+          score=(tail*score).sum(dim=2)
+        return(score)    
     
     def DistMultD(self, head, relation, tail, mode):
         head1,headp=torch.chunk(head, 2, dim=3)
