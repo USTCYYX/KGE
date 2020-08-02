@@ -284,7 +284,10 @@ def main(args):
                     else:
                         current_learning_rate = current_learning_rate * 0.04
                 else:
-                    current_learning_rate = current_learning_rate * 0.1
+                    if args.model == 'RESCAL':
+                        current_learning_rate = current_learning_rate * 0.04
+                    else:
+                        current_learning_rate = current_learning_rate * 0.1
 
                 logging.info('Change learning_rate to %f at step %d' % (current_learning_rate, step))
 
