@@ -47,6 +47,7 @@ def parse_args(args=None):
     parser.add_argument('-init', '--init_checkpoint', default=None, type=str)
     parser.add_argument('-save', '--save_path', default=None, type=str)
     parser.add_argument('--max_steps', default=100000, type=int)
+    parser.add_argument('-u','--uncertainty',default=0,type=float)
 
     parser.add_argument('--save_checkpoint_steps', default=10000, type=int)
     parser.add_argument('--valid_steps', default=10000, type=int)
@@ -279,8 +280,10 @@ def main(args):
 
             if step >= warm_up_steps:
                 if args.data_path == 'data/wn18rr':
-                    if args.model == 'RESCAL':
+                    if args.model == 'RESCAL' and args.uncertainty==0:
                         current_learning_rate = current_learning_rate * 0.1
+                    elif args.model == 'RESCAL' and args.uncertainty!=0:
+                        current_learning_rate = current_learning_rate
                     else:
                         current_learning_rate = current_learning_rate * 0.04
                 else:
@@ -337,10 +340,11 @@ def main(args):
         logging.info('Evaluating on Test Dataset...')
         metrics = kge_model.test_step(kge_model, test_triples, all_true_triples, args)
         log_metrics('Test', step, metrics)
-    
-    logging.info('Evaluating on Training Dataset...')
-    metrics = kge_model.test_step(kge_model, train_evaluate_triples, all_true_triples, args)
-    log_metrics('Test', step, metrics)
+        
+    if args.evaluate_train:
+        logging.info('Evaluating on Training Dataset...')
+        metrics = kge_model.test_step(kge_model, train_triples, all_true_triples, args)
+        log_metrics('Test', step, metrics)   
         
 if __name__ == '__main__':
     main(parse_args())
